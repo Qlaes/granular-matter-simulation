@@ -7,17 +7,6 @@ import matplotlib.pyplot as plt
 
 ###############################################################################
 # Batch 2 — Grain-size distribution sweep (fixed system size)
-#
-# Research question (fixed across the project):
-#   How do system size and grain-size distribution affect packing density
-#   and stress distribution in a simulated granular medium?
-#
-# This batch isolates grain-size distribution (PSD) effects by keeping N fixed.
-#
-# Lecture anchors:
-#   - Lecture 5: overdamped / viscous relaxation  x_{n+1} = x_n + (F/gamma) dt
-#   - Lecture 1: cutoff-based neighbour strategy (here: cell list for speed)
-#   - Lecture 12: contact network measures (degree from adjacency / contacts)
 ###############################################################################
 
 
@@ -1238,3 +1227,4 @@ if __name__ == "__main__":
             plt.ylabel("y-bin")
             plt.tight_layout()
             plt.show()
+
