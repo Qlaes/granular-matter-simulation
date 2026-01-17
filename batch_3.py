@@ -7,20 +7,7 @@ import matplotlib.pyplot as plt
 
 ###############################################################################
 # Batch 3 (FAST) — Extreme interaction cases (system size × grain-size distribution)
-#
-# Research question:
-#   How do system size and grain-size distribution affect packing density
-#   and stress distribution in a simulated granular medium?
-#
-# Lecture anchors (conceptual):
-#   - Lecture 5: overdamped / highly dissipative relaxation:
-#       x_{n+1} = x_n + (F / gamma) dt
-#   - Lecture 1: neighbour acceleration (cell list idea)
-#   - Lecture 12: contact structure exists, but Batch 3 plots focus on stress
-#
-# Output: EXACTLY 2 plots
-#   (1) 2×2 panel: normalized stress-map magnitude (sigma_yy / <p>)
-#   (2) Interaction plot: pressure proxy vs PSD for small vs large N
+
 ###############################################################################
 
 
@@ -665,7 +652,7 @@ if __name__ == "__main__":
 
     neighbour_cutoff_factor = 1.25
 
-    # Faster overdamped evolution (Lecture 5 style)
+    # Faster overdamped evolution
     overdamped_time_step_size = 1.2e-3
     drag_coefficient_gamma = 120.0
 
@@ -877,3 +864,4 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.show()
+
