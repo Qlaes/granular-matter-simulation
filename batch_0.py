@@ -2,27 +2,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+'''
+Goal of batch 0 :
+
+ - To build a small 2D granular system
+ - To asceratin numerical stability
+ - To check that kinetic energy decays (because we include damping)
+ - To check that overlaps remain small (time step is not too big)
+
+  We will use:
+ - A leapfrog integrator
+ - Neighbour lists 
+ - Soft-sphere particle contacts
+ - Soft wall contacts 
+ - Simple network degree histogram 
+''':
+
+
 
 ###############################################################################
-# Batch 0 goal:
-#
-# - Build a small 2D granular system
-# - Run a short simulation to test numerical stability
-# - Check that kinetic energy decays (because we include damping)
-# - Check that overlaps remain small (time step is not too big)
-#
-# This version uses:
-# - Leapfrog integrator (Lecture 1 style)
-# - Neighbour list (Lecture 1 style)
-# - Soft-sphere particle contacts
-# - Soft wall contacts (replaces reflecting boundaries)
-# - Simple network degree histogram (Lecture 12 style)
-###############################################################################
-
-
-
-###############################################################################
-# 1) Initialization helpers
+# 1) Definition of 2 helpers
 ###############################################################################
 
 
@@ -32,7 +31,7 @@ def create_grid_initial_positions(number_of_particles,
                                   particle_radius,
                                   extra_spacing_factor=1.05):
     """
-    Create initial particle positions on a grid, then cut to the requested
+    This function places the initial particle positions on a grid which implements the desired
     number_of_particles. We use spacing slightly larger than 2R so that there
     is no initial overlap.
     """
@@ -74,11 +73,10 @@ def create_small_random_velocities(number_of_particles,
                                    random_speed_scale,
                                    random_seed):
     """
-    Small random initial velocities (so we can see if energy decays smoothly).
+    Function that outputs random initial velocities (so we can see if energy decays smoothly).
     """
 
     rng = np.random.default_rng(random_seed)
-
     particle_velocities = random_speed_scale * rng.normal(0.0, 1.0, size=(number_of_particles, 2))
 
     return particle_velocities
@@ -86,28 +84,24 @@ def create_small_random_velocities(number_of_particles,
 
 
 ###############################################################################
-# 2) Neighbour list
+# 2) Definition  of neighbour list
 ###############################################################################
 
 
-def build_neighbour_list(particle_positions,
-                         cutoff_radius):
-    """
-    Neighbour list: for each i, store indices j within cutoff_radius.
+def build_neighbour_list(particle_positions, cutoff_radius):
+  
+  """
+    This is our neighbour list. For each i, we store indices j within a cutoff_radius.
     """
 
     number_of_particles = particle_positions.shape[0]
-
     neighbour_indices_list = []
 
     for i in range(number_of_particles):
 
         displacement_vectors = particle_positions - particle_positions[i]
-
         distances = np.sqrt(np.sum(displacement_vectors ** 2, axis=1))
-
         neighbours_for_i = np.where(distances <= cutoff_radius)[0]
-
         neighbour_indices_list.append(neighbours_for_i)
 
     return neighbour_indices_list
@@ -126,18 +120,17 @@ def compute_soft_sphere_contact_forces(particle_positions,
                                        contact_spring_constant,
                                        contact_damping_coefficient):
     """
-    Soft-sphere DEM-like contact:
+    Particle contacts are modelled as Soft-sphere DEM:
 
     overlap = 2R - distance
 
     elastic normal force:   k_n * overlap
     damping normal force:   - gamma_n * (v_rel · n_hat)
 
-    Only active if overlap > 0.
+    It only activates if overlap > 0.
     """
 
     number_of_particles = particle_positions.shape[0]
-
     total_contact_forces = np.zeros((number_of_particles, 2), dtype=float)
 
     for i in range(number_of_particles):
@@ -148,28 +141,21 @@ def compute_soft_sphere_contact_forces(particle_positions,
                 continue
 
             displacement_vector = particle_positions[j] - particle_positions[i]
-
             center_distance = np.sqrt(np.sum(displacement_vector ** 2))
 
             if center_distance == 0.0:
                 continue
 
             unit_normal_vector = displacement_vector / center_distance
-
             overlap_distance = 2.0 * particle_radius - center_distance
 
             if overlap_distance > 0.0:
 
                 elastic_force_magnitude = contact_spring_constant * overlap_distance
-
                 relative_velocity = particle_velocities[j] - particle_velocities[i]
-
                 normal_relative_velocity = np.dot(relative_velocity, unit_normal_vector)
-
                 damping_force_magnitude = contact_damping_coefficient * normal_relative_velocity
-
                 normal_force_vector = (elastic_force_magnitude - damping_force_magnitude) * unit_normal_vector
-
                 total_contact_forces[i] -= normal_force_vector
                 total_contact_forces[j] += normal_force_vector
 
@@ -185,11 +171,10 @@ def compute_soft_wall_contact_forces(particle_positions,
                                      wall_spring_constant,
                                      wall_damping_coefficient):
     """
-    Soft repulsive contact forces between particles and the box walls.
-
-    Walls exert:
-    - elastic repulsion proportional to overlap
-    - viscous damping proportional to normal velocity
+    This function models repulsive contact forces between particles and the box walls. We don't use reflective
+    boundary conditions since we need the energy to decay. The walls exert:
+    - an elastic repulsion proportional to overlap
+    - a viscous damping force proportional to normal velocity
     """
 
     number_of_particles = particle_positions.shape[0]
@@ -283,21 +268,15 @@ def leapfrog_time_step(particle_positions,
                        time_step_size,
                        compute_total_forces_function):
     """
-    Leapfrog / half-step scheme:
+    Leapfrog scheme integrator:
 
-    r_half = r + 0.5 v dt
-    v_new  = v + (F(r_half)/m) dt
-    r_new  = r_half + 0.5 v_new dt
     """
 
     half_step_positions = particle_positions + 0.5 * particle_velocities * time_step_size
-
     forces_at_half_step = compute_total_forces_function(half_step_positions, particle_velocities)
-
     new_velocities = particle_velocities + (forces_at_half_step / particle_mass) * time_step_size
-
     new_positions = half_step_positions + 0.5 * new_velocities * time_step_size
-
+                         
     return new_positions, new_velocities
 
 
@@ -308,17 +287,14 @@ def overdamped_relaxation_step(particle_positions,
                                time_step_size,
                                compute_total_forces_function):
     """
-    Overdamped relaxation:
-
+    Overdamped relaxation is modelled as:
+    
     x_{n+1} = x_n + (F/gamma) dt
     """
 
     total_forces = compute_total_forces_function(particle_positions, particle_velocities)
-
     drift_velocities = total_forces / drag_coefficient_gamma
-
     new_positions = particle_positions + drift_velocities * time_step_size
-
     new_velocities = drift_velocities
 
     return new_positions, new_velocities
@@ -841,3 +817,4 @@ if __name__ == "__main__":
     _human_axes_formatting()
     plt.tight_layout()
     plt.show()
+
