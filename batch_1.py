@@ -7,20 +7,6 @@ import matplotlib.pyplot as plt
 
 ###############################################################################
 # Batch 1 (FASTER) — System-size sweep (monodisperse)
-#
-# Speed changes (no conda / no numba):
-#
-#   - Larger overdamped step (slightly): overdamped_time_step_size = 5e-4
-#   - Fewer relaxation steps per compression stage (max 200)
-#   - Fewer compression stages (max 140) with larger strain per stage (0.01)
-#   - Cell-list rebuilt only every few relaxation steps (or if particles moved a lot)
-#   - Heavy outputs (stress maps) computed only for the first repeat of each N
-###############################################################################
-
-
-
-###############################################################################
-# 0) Geometry + initialization
 ###############################################################################
 
 
@@ -750,7 +736,7 @@ if __name__ == "__main__":
 
 
 
-    # ------------------------------ Cell list caching ---------------------------
+    # ------------------------------ Cell list  ---------------------------
 
     # Rebuild the cell list only every few relaxation steps,
     # or if particles moved too far since the last rebuild.
@@ -955,3 +941,4 @@ if __name__ == "__main__":
         plt.ylabel("y-bin")
         plt.tight_layout()
         plt.show()
+
